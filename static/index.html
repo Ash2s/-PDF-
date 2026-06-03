@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF 表格填写 · Form Filler</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="header-brand">
+      <svg class="header-ornament" width="28" height="14" viewBox="0 0 28 14" fill="none" aria-hidden="true">
+        <path d="M14 2v10M9 7h10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+        <circle cx="14" cy="7" r="1.8" fill="currentColor" opacity="0.6"/>
+      </svg>
+      <h1 class="site-title">PDF 表单填写</h1>
+      <p class="site-subtitle">AI 驱动的智能表格填写工具</p>
+    </div>
+    <button class="btn btn-ghost header-reset" onclick="resetAll()">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+        <path d="M12 3.5L10.5 2 7 5.5 3.5 2 2 3.5 5.5 7 2 10.5 3.5 12 7 8.5 10.5 12 12 10.5 8.5 7 12 3.5z" fill="currentColor"/>
+      </svg>
+      清空重置
+    </button>
+  </div>
+</header>
+
+<main class="main">
+
+  <div class="section-label">上傳資料</div>
+  <div class="upload-row animate-in">
+    <div class="upload-card">
+      <div class="upload-card-header">
+        <div class="upload-card-title">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <circle cx="9" cy="6" r="3" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M3 16c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+          <span>學生資料</span>
+        </div>
+        <span class="tag">可多文件</span>
+      </div>
+      <div class="drop-zone" id="studentDropZone">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <div class="drop-zone-text"><strong>點擊上傳</strong> 或拖曳檔案</div>
+        <div class="drop-zone-hint">學生個人簡歷 — PDF / Word / 圖片</div>
+      </div>
+      <div class="file-list" id="studentFiles"></div>
+    </div>
+    <div class="upload-card">
+      <div class="upload-card-header">
+        <div class="upload-card-title">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <rect x="2" y="1" width="14" height="16" rx="1.5" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M7 5h4M7 8h4M7 11h2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            <path d="M13 5v6M11 11h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+          <span>PDF 申請表</span>
+        </div>
+        <span class="tag">掃描件可用</span>
+      </div>
+      <div class="drop-zone" id="formDropZone">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="8" y1="13" x2="16" y2="13"/>
+          <line x1="8" y1="17" x2="13" y2="17"/>
+        </svg>
+        <div class="drop-zone-text"><strong>點擊上傳</strong> 或拖曳 PDF</div>
+        <div class="drop-zone-hint">AI 自動識別欄位並填寫</div>
+      </div>
+      <div class="file-list" id="formFiles"></div>
+    </div>
+  </div>
+
+  <div class="section-label">表格處理</div>
+
+  <div class="state-card state-waiting" id="waitingState">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="17 8 12 3 7 8"/>
+      <line x1="12" y1="3" x2="12" y2="15"/>
+    </svg>
+    <div class="state-waiting-text">上傳資料後按下方按鈕，AI 自動填寫並生成 PDF</div>
+    <button class="btn btn-primary" onclick="startProcessing()" id="processBtn">
+      開始處理
+    </button>
+  </div>
+
+  <div class="state-card state-processing" id="processingLoading" style="display:none;">
+    <div class="progress-visual">
+      <div class="progress-step" id="pStep0">
+        <div class="p-circle">
+          <span class="p-num">1</span>
+          <svg class="p-check" width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M3 7L6 10L11 4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="p-spinner"></div>
+        </div>
+        <div class="p-label">上传资料</div>
+      </div>
+      <div class="p-connector"></div>
+      <div class="progress-step" id="pStep1">
+        <div class="p-circle">
+          <span class="p-num">2</span>
+          <svg class="p-check" width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M3 7L6 10L11 4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="p-spinner"></div>
+        </div>
+        <div class="p-label">识别字段</div>
+      </div>
+      <div class="p-connector"></div>
+      <div class="progress-step" id="pStep2">
+        <div class="p-circle">
+          <span class="p-num">3</span>
+          <svg class="p-check" width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M3 7L6 10L11 4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="p-spinner"></div>
+        </div>
+        <div class="p-label">生成PDF</div>
+      </div>
+    </div>
+    <div class="p-status" id="loadingText">AI 正在提取学生资料…</div>
+  </div>
+
+  <div class="result-section" id="resultSection" style="display:none;">
+
+    <div class="form-tab-bar animate-in delay-1" id="formTabs"></div>
+
+    <div class="status-bar animate-in delay-1">
+      <span class="status-dot"></span>
+      <span id="statusText"></span>
+    </div>
+
+    <div class="pdf-viewer animate-in delay-2">
+      <div class="pdf-toolbar">
+        <div class="page-nav">
+          <button class="page-nav-btn" onclick="changePage(-1)" aria-label="上一頁">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+              <path d="M7 1L3 5l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <span class="page-indicator" id="pageIndicator">1 / 1</span>
+          <button class="page-nav-btn" onclick="changePage(1)" aria-label="下一頁">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+              <path d="M3 1l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+        <span class="pdf-name" id="pdfName"></span>
+      </div>
+      <div class="pdf-body" id="pdfBody">
+        <div class="spinner"><div class="spinner-ring"></div></div>
+      </div>
+      <div class="pdf-download-bar">
+        <button class="btn btn-download" onclick="downloadPDF()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M8 1v8M4 5l4 4 4-4M2 13h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          下载填写版
+        </button>
+      </div>
+    </div>
+
+    <div class="ai-card animate-in delay-3">
+      <div class="ai-card-header">
+        <div class="ai-card-title">
+          <span class="ai-dot"></span>
+          <span>修改意见</span>
+        </div>
+        <button class="btn btn-ghost btn-regen" onclick="regeneratePDF()">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <path d="M1 7a6 6 0 0 1 10.5-4M13 7a6 6 0 0 1-10.5 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            <path d="M9.5 3H12V.5M4.5 11H2v2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          重新生成
+        </button>
+      </div>
+      <div class="ai-messages" id="aiMessages"></div>
+      <div class="ai-input-bar">
+        <input type="text" class="ai-input" id="aiInput"
+          placeholder="输入修改意见，如：把学校名称改成…"
+          onkeydown="if(event.key==='Enter')sendAI()">
+        <button class="ai-send-btn" onclick="sendAI()">发送</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
