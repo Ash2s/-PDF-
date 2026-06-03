@@ -1,0 +1,11 @@
+uploads/
+outputs/
+__pycache__/
+*.pyc
+.env
+.git
+.gitignore
+.gitkeep
+CLAUDE.md
+TODO.md
+start.sh
