@@ -1,5 +1,8 @@
 """PDF表格填写工具 - FastAPI主程序（支持多表单）"""
 
+from dotenv import load_dotenv
+load_dotenv()
+
 import os
 import uuid
 import json
@@ -69,7 +72,7 @@ async def upload_student(file: UploadFile = File(...)):
         f.write(content)
 
     from datetime import date
-    today = date(2026, 6, 2)
+    today = date.today()
 
     def _calc_age(info_dict):
         dob = info_dict.get("dob", "")
@@ -322,7 +325,7 @@ async def chat(req: ChatRequest):
 
         elif action == "delete":
             for label in result.get("fields", []):
-                session["form_fields"] = [f for f in form_fields if f["label"].lower() != label.lower()]
+                form["form_fields"] = [f for f in form_fields if f["label"].lower() != label.lower()]
             text_positions = extract_text_with_positions(pdf_path)
             form["matched_fields"] = match_fields_to_positions(form_fields, text_positions)
             form["text_positions"] = text_positions
@@ -444,6 +447,22 @@ async def pdf_preview(session_id: str, page: int = 0, form_index: int = 0):
         "width": img_data["width"],
         "height": img_data["height"],
     })
+
+
+@app.get("/api/pdf-info/{session_id}")
+async def pdf_info(session_id: str, form_index: int = 0):
+    if session_id not in sessions:
+        raise HTTPException(404, "会话不存在")
+    
+    form = _get_form(sessions[session_id], form_index)
+    filled_path = os.path.join(OUTPUT_DIR, f"filled_{session_id}_{form_index}.pdf")
+    pdf_path = filled_path if os.path.exists(filled_path) else form.get("pdf_path")
+    
+    if not pdf_path or not os.path.exists(pdf_path):
+        raise HTTPException(400, "PDF文件不存在")
+    
+    pdf_info = get_pdf_info(pdf_path)
+    return JSONResponse(pdf_info)
 
 
 # ─── 直接下载已生成的PDF ───

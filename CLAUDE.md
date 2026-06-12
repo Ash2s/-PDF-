@@ -30,7 +30,7 @@ FastAPI + PyMuPDF + MIMO API 驱动的 PDF 表格自动填写工具。
 
 ## 启动
 ```bash
-export MIMO_API_KEY="your_key_here"
+# 复制 .env.example 为 .env 并填入 MIMO_API_KEY
 python app.py
 # 访问 http://localhost:8001/
 ```

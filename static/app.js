@@ -156,7 +156,6 @@ async function startProcessing() {
             const lastForm = forms[currentFormIndex];
             document.getElementById('statusText').textContent =
                 `已处理 ${forms.length} 个表单，当前: ${lastForm.name} (${lastForm.filled_fields}/${lastForm.total_fields} 字段)`;
-            totalPages = 1;
             loadPDFPreview(0);
             showAIWelcome();
         }
@@ -205,11 +204,21 @@ async function loadPDFPreview(page) {
     body.innerHTML = '<div class="spinner"><div class="spinner-ring"></div></div>';
 
     try {
+        // 先获取总页数
+        const infoResp = await fetch(`/api/pdf-info/${sessionId}?form_index=${currentFormIndex}`);
+        if (infoResp.ok) {
+            const info = await infoResp.json();
+            console.log('PDF info:', info);
+            totalPages = info.total_pages || 1;
+        }
+
         const resp = await fetch(`/api/pdf-preview/${sessionId}?page=${page}&form_index=${currentFormIndex}`);
         const data = await resp.json();
         body.innerHTML = `<img src="${data.image}" alt="PDF预览">`;
         document.getElementById('pageIndicator').textContent = `${page + 1} / ${totalPages}`;
-    } catch {
+        console.log('Page indicator:', `${page + 1} / ${totalPages}`);
+    } catch (err) {
+        console.error('Preview error:', err);
         body.innerHTML = '<div style="color:var(--muted)">预览加载失败</div>';
     }
 }
@@ -232,6 +241,24 @@ async function downloadPDF() {
         a.href = url; a.download = name; a.click();
         URL.revokeObjectURL(url);
     } catch (err) { alert('下载失败: ' + err.message); }
+}
+
+async function downloadAll() {
+    if (!sessionId || forms.length === 0) return;
+    for (let i = 0; i < forms.length; i++) {
+        try {
+            const resp = await fetch(`/api/download-pdf/${sessionId}?form_index=${i}`);
+            if (!resp.ok) continue;
+            const blob = await resp.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `filled_${forms[i]?.name || `form_${i+1}.pdf`}`;
+            a.click();
+            URL.revokeObjectURL(url);
+            await new Promise(r => setTimeout(r, 500));
+        } catch {}
+    }
 }
 
 async function regeneratePDF() {
